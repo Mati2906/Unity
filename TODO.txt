@@ -1,0 +1,52 @@
+Do 27.11.2016
+- Skradanie:
+ * Kucanie
+- Patrolowanie:
+ * Lista punktów patrolowych
+- Interakcja z graczem:
+ * Wyznaczenie punktu patrolowego w ostatnim punkcie widzenia gracza
+
+
+Szymon:
+- Skradanie:
+ * Kucanie
+ * Chowanie siê
+  ^ Szafa
+  ^ biurko
+  ^ ³ó¿ko 
+
+- Patrolowanie:
+ * Lista punktów patrolowych
+ * Losowy punkt w promieniu punktu patrolowego
+
+- Interakcja z graczem:
+ * Wyznaczenie punktu patrolowego w ostatnim punkcie widzenia gracza
+ * Zabicie gracza gdy jest w odpowiedniej odleg³oœci
+
+
+ 
+Mateusz:
+Zaplanowaæ trasy patrolowe 
+ 
+ 
+ 
+ 
+ 
+
+
+
+Co tydzieñ:
+link do filmu na youtube prezentuj¹cy zmiany 
+Krótki opis co zosta³o zrobione w tym tygodniu
+planowane zmiany w przysz³ym tygodniu 
+w³asne pytania odnoœnie projektu.
+
+
+
+
+Kontrola wersji:	SVN
+Taski:			Trello + Excel
+Komunikacja:		Facebook
+
+
+MoSCoW - ustalanie priorytetów
