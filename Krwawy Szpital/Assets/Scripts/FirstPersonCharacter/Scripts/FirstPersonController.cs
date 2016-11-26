@@ -257,5 +257,17 @@ namespace UnityStandardAssets.Characters.FirstPerson
             }
             body.AddForceAtPosition(m_CharacterController.velocity*0.1f, hit.point, ForceMode.Impulse);
         }
+
+        public void DieOnCollisionWithMonster()
+        {
+            enabled = false;
+            Debug.Log("Omnomnomnom...");
+            for (int i = 0; i < 100; i++)
+            {
+                transform.position -= new Vector3(0, 0.005f, 0);
+                transform.Rotate(-0.3f, 0, -0.3f);
+            }
+            
+        }
     }
 }
