@@ -50,28 +50,22 @@ public class Perspective : Sense
         if (angle < fieldOfView && Physics.Raycast(transform.position, direction, out hit, ViewDistance))
         {
             Aspect aspect = hit.collider.GetComponent<Aspect>();
-
             if (aspect != null && aspect.aspectName == aspectName)
             {
                 Debug.Log("Widze cię moje mięsko!!!");
-                patrol.SetTarget(hit.collider.GetComponent<Transform>().position);
-                patrol.Run();
+                patrol.Run(hit.collider.GetComponent<Transform>().position);
             }
-            
         }
-        
     }
 
     void OnDrawGizmos()
     {
         if (player == null)
-        {
             return;
-        }
 
         Debug.DrawLine(transform.position, player.position, Color.red);
 
-        Vector3 frontRayPoint = transform.position + (transform.forward * fieldOfView);
+        Vector3 frontRayPoint = transform.position + (transform.forward * ViewDistance);
 
         Vector3 leftRayPoint = frontRayPoint;
         leftRayPoint.x += fieldOfView * 0.5f;

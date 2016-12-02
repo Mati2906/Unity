@@ -25,18 +25,17 @@ public class Patrol : MonoBehaviour
 
         GotoNextPoint();
     }
-    public void Run()
+    public void Run(Vector3 to)
     {
+        target = to;
         Running = true;
     }
 
     void GotoNextPoint()
     {
-        // Returns if no points have been set up
         if (points.Count == 0)
             return;
 
-        // Set the agent to go to the currently selected destination.
         if(points[destPoint] != null)
             agent.SetDestination(points[destPoint].position);
         destPoint = (destPoint + 1) % points.Count;
@@ -68,7 +67,6 @@ public class Patrol : MonoBehaviour
         if(collision.gameObject.name == "Player")
         {
             collision.gameObject.GetComponent<FirstPersonController>().DieOnCollisionWithMonster();
-            enabled = false;
 
         }
 
