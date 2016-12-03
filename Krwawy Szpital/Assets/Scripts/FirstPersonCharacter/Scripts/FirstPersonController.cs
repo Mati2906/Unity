@@ -12,9 +12,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
 	[RequireComponent(typeof (AudioSource))]
 	public class FirstPersonController : MonoBehaviour
 	{
-		[SerializeField] private bool m_IsWalking;
-		[SerializeField] private bool m_IsCrouching;
-        [SerializeField] private bool m_IsRunning;
+		
 
 		[SerializeField] private float m_WalkSpeed;
 
@@ -34,12 +32,16 @@ namespace UnityStandardAssets.Characters.FirstPerson
 		[SerializeField] private float m_StepInterval;
 		[SerializeField] private AudioClip[] m_FootstepSounds;    
 		[SerializeField] private AudioClip m_JumpSound;           
-		[SerializeField] private AudioClip m_LandSound;           
+		[SerializeField] private AudioClip m_LandSound;
 
 
-		private Camera m_Camera;
+        public bool m_IsWalking;
+        public bool m_IsCrouching;
+        public bool m_IsRunning;
+
+        private Camera m_Camera;
 		private bool m_Jump;
-        private float m_speed;
+        public float m_speed;
 		private Vector2 m_Input;
 		private Vector3 m_MoveDir = Vector3.zero;
 		private CharacterController m_CharacterController;
@@ -76,13 +78,15 @@ namespace UnityStandardAssets.Characters.FirstPerson
 			if (isAlive)
 			{
 				RotateView();
-				// the jump state needs to read here to make sure it is not missed
+
 				if (!m_Jump)
 				{
 					m_Jump = CrossPlatformInputManager.GetButtonDown("Jump");
 				}
 
-				if (!m_PreviouslyGrounded && m_CharacterController.isGrounded)
+
+
+                if (!m_PreviouslyGrounded && m_CharacterController.isGrounded)
 				{
 					StartCoroutine(m_JumpBob.DoBobCycle());
 					PlayLandingSound();
@@ -197,19 +201,23 @@ namespace UnityStandardAssets.Characters.FirstPerson
 			Vector3 newCameraPosition = m_Camera.transform.localPosition;
 
             if (m_IsCrouching)
+            {
                 newCameraPosition.y = 0.4f;
+            }
             else if (m_CharacterController.velocity.magnitude > 0 && m_CharacterController.isGrounded)
+            {
                 newCameraPosition.y = m_Camera.transform.localPosition.y - m_JumpBob.Offset();
+                newCameraPosition.y *= newCameraPosition.y == 0.4f ? 2 : 1;
+            }
 			else
                 newCameraPosition.y = m_OriginalCameraPosition.y - m_JumpBob.Offset();
-
-			m_Camera.transform.localPosition = newCameraPosition;
+            //do poprawy
+			m_Camera.transform.localPosition = newCameraPosition.y < 0 ? m_OriginalCameraPosition : newCameraPosition;
 		}
 
 
 		private void GetInput()
 		{
-		// Read input
 			float horizontal = CrossPlatformInputManager.GetAxis("Horizontal");
 			float vertical = CrossPlatformInputManager.GetAxis("Vertical");
 
@@ -220,13 +228,17 @@ namespace UnityStandardAssets.Characters.FirstPerson
             m_IsRunning = Input.GetKey(KeyCode.LeftShift);
             m_IsCrouching = Input.GetKey(KeyCode.LeftControl);
 
-            if(!m_IsRunning && !m_IsCrouching) 
+            if (!m_IsRunning && !m_IsCrouching) 
 			    m_speed = m_WalkSpeed;
+            //œmieszne rzeczy siê dziej¹ przy jednoczesnym wciœnieciu shift i ctrl
+            //mo¿e warto zmieniæ na obs³uge up/down
+			if (m_IsRunning && !RunningBefore && !m_IsCrouching)
+                m_speed = m_RunSpeed;
 
-			if (m_IsRunning && !RunningBefore)
-                m_speed = m_RunSpeed;		
-			
-			m_Input = new Vector2(horizontal, vertical);
+            if (m_IsCrouching && !CrouchingBefore)
+                m_speed = m_StealthSpeed;
+
+            m_Input = new Vector2(horizontal, vertical);
 
 			// normalize input if it exceeds 1 in combined length:
 			if (m_Input.sqrMagnitude > 1)
@@ -259,7 +271,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
 			if(isAlive)
 			{
 				Rigidbody body = hit.collider.attachedRigidbody;
-				//dont move the rigidbody if the character is on top of it
+
 				if (m_CollisionFlags == CollisionFlags.Below)
 				{
 					return;
@@ -276,15 +288,17 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
 		public void DieOnCollisionWithMonster()
 		{
-			isAlive = false;
-            GetComponent<Aspect>().aspectName = Aspect.aspect.DeadBody;
-			Debug.Log("Omnomnomnom...");
-			for (int i = 0; i < 100; i++)
-			{
-				transform.position -= new Vector3(0, 0.005f, 0);
-				transform.Rotate(-0.3f, 0, -0.3f);
-			}
-			
+            if(isAlive)
+            {
+                isAlive = false;
+                GetComponent<Aspect>().aspectName = Aspect.aspect.DeadBody;
+                Debug.Log("Omnomnomnom...");
+                for (int i = 0; i < 100; i++)
+                {
+                    transform.position -= new Vector3(0, 0.005f, 0);
+                    transform.Rotate(-0.3f, 0, -0.3f);
+                }
+            }
 		}
 	}
 }
