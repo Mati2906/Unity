@@ -5,7 +5,6 @@ using UnityStandardAssets.Characters.FirstPerson;
 
 public class Patrol : MonoBehaviour
 {
-
     public List<Transform> points;
     public ThirdPersonCharacter character { get; private set; }
 
@@ -25,26 +24,6 @@ public class Patrol : MonoBehaviour
 
         GotoNextPoint();
     }
-    public void Run(Vector3 to)
-    {
-        target = to;
-        Running = true;
-    }
-
-    void GotoNextPoint()
-    {
-        if (points.Count == 0)
-            return;
-
-        if(points[destPoint] != null)
-            agent.SetDestination(points[destPoint].position);
-        destPoint = (destPoint + 1) % points.Count;
-    }
-
-    public void SetTarget(Vector3 target)
-    {
-        this.target = target;
-    }
 
     void Update()
     {
@@ -62,13 +41,32 @@ public class Patrol : MonoBehaviour
         }
     }
 
+    public void Run(Vector3 to)
+    {
+        target = to;
+        Running = true;
+    }
+
+    public void SetTarget(Vector3 target)
+    {
+        this.target = target;
+    }
+
+    void GotoNextPoint()
+    {
+        if (points.Count == 0)
+            return;
+
+        if(points[destPoint] != null)
+            agent.SetDestination(points[destPoint].position);
+        destPoint = (destPoint + 1) % points.Count;
+    }
+
     void OnCollisionEnter(Collision collision)
     {
         if(collision.gameObject.name == "Player")
         {
             collision.gameObject.GetComponent<FirstPersonController>().DieOnCollisionWithMonster();
-
         }
-
     }
 }

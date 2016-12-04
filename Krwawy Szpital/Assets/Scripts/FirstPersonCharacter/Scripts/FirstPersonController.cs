@@ -228,10 +228,12 @@ namespace UnityStandardAssets.Characters.FirstPerson
             m_IsRunning = Input.GetKey(KeyCode.LeftShift);
             m_IsCrouching = Input.GetKey(KeyCode.LeftControl);
 
+            m_IsWalking = !m_IsCrouching && !m_IsRunning;
+
             if (!m_IsRunning && !m_IsCrouching) 
 			    m_speed = m_WalkSpeed;
             //œmieszne rzeczy siê dziej¹ przy jednoczesnym wciœnieciu shift i ctrl
-            //mo¿e warto zmieniæ na obs³uge up/down
+            //mo¿e warto zmieniæ na obs³uge key up/down
 			if (m_IsRunning && !RunningBefore && !m_IsCrouching)
                 m_speed = m_RunSpeed;
 
