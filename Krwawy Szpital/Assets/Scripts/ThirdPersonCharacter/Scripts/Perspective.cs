@@ -1,20 +1,21 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityStandardAssets.Characters.FirstPerson;
 
 public class Perspective : Sense
 {
     public int fieldOfView;
     public int ViewDistance;
 
-    private SphereCollider col;
     private Transform player;
+    private FirstPersonController playerController;
     private Patrol patrol;
 
     protected override void Initialize()
     {
         player = GameObject.Find("Player").transform;
+        playerController = GameObject.Find("Player").GetComponent<FirstPersonController>();
         patrol = GetComponent<Patrol>();
-        col = GetComponent<SphereCollider>();
     }
 
     protected override void UpdateSense()
@@ -24,6 +25,7 @@ public class Perspective : Sense
         if (elapsedTime >= detectionRate)
         {
             DetectAspect();
+            ListeningPlayer();
         }
         OnDrawGizmos();
     }
@@ -33,12 +35,16 @@ public class Perspective : Sense
         Aspect aspect = other.GetComponent<Aspect>();
 
         if (aspect != null && aspect.aspectName == aspectName)
-        {
-            Debug.Log("Mięsko do mnie przyszło!!!");
             patrol.Run(other.GetComponent<Transform>().position);
+    }
+    void ListeningPlayer()
+    {
+        if (Vector3.Distance(player.position, transform.position) < playerController.audibility)
+        {
+            Debug.Log("słysze cie! - " + Vector3.Distance(player.position, transform.position));
+            patrol.SetTarget(player.position);
         }
     }
-
     void DetectAspect()
     {
         RaycastHit hit;
@@ -59,10 +65,7 @@ public class Perspective : Sense
             //sprawdzamy czy tym obiektem jest gracz
             Aspect aspect = hit.collider.GetComponent<Aspect>();
             if (aspect != null && aspect.aspectName == aspectName)
-            {
-                Debug.Log("Widze cię moje mięsko!!!");
                 patrol.Run(hit.collider.GetComponent<Transform>().position);
-            }
         }
     }
 
@@ -72,7 +75,6 @@ public class Perspective : Sense
             return;
 
         //Debug.DrawLine(transform.position, player.position, Color.red);
-
         Vector3 frontRayPoint = transform.position + (transform.forward * ViewDistance);
 
         //Vector3 leftRayPoint = Quaternion.AngleAxis(-fieldOfView / 2, Vector3.up) * frontRayPoint;

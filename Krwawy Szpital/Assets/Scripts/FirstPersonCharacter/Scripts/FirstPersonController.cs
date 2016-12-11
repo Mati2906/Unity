@@ -26,8 +26,6 @@ namespace UnityStandardAssets.Characters.FirstPerson
 		[SerializeField] private float m_StickToGroundForce;
 		[SerializeField] private float m_GravityMultiplier;
 		[SerializeField] private MouseLook m_MouseLook;
-		[SerializeField] private bool m_UseFovKick;
-		[SerializeField] private FOVKick m_FovKick = new FOVKick();
 		[SerializeField] private LerpControlledBob m_JumpBob = new LerpControlledBob();
 		[SerializeField] private float m_StepInterval;
 		[SerializeField] private AudioClip[] m_FootstepSounds;    
@@ -35,13 +33,21 @@ namespace UnityStandardAssets.Characters.FirstPerson
 		[SerializeField] private AudioClip m_LandSound;
 
 
-        public bool m_IsWalking;
+
+
+
         public bool m_IsCrouching;
+        public float audibilityForCrouch;
+        public bool m_IsWalking;
+        public float audibilityForWalk;
         public bool m_IsRunning;
+        public float audibilityForRun;
+
+        public float audibility;
+        public float m_speed;
 
         private Camera m_Camera;
-		private bool m_Jump;
-        public float m_speed;
+		public bool m_Jump;
 		private Vector2 m_Input;
 		private Vector3 m_MoveDir = Vector3.zero;
 		private CharacterController m_CharacterController;
@@ -50,7 +56,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
 		private Vector3 m_OriginalCameraPosition;
 		private float m_StepCycle;
 		private float m_NextStep;
-		private bool m_Jumping;
+		public bool m_Jumping;
 		private AudioSource m_AudioSource;
 		private bool isAlive;
 		private Aspect aspect;
@@ -60,14 +66,12 @@ namespace UnityStandardAssets.Characters.FirstPerson
 			m_CharacterController = GetComponent<CharacterController>();
 			m_Camera = Camera.main;
 			m_OriginalCameraPosition = m_Camera.transform.localPosition;
-			m_FovKick.Setup(m_Camera);
 			m_StepCycle = 0f;
 			m_NextStep = m_StepCycle/2f;
 			m_Jumping = false;
 			m_AudioSource = GetComponent<AudioSource>();
 			m_MouseLook.Init(transform , m_Camera.transform);
 			isAlive = true;
-
 		}
 
 		private void Update()
@@ -196,27 +200,45 @@ namespace UnityStandardAssets.Characters.FirstPerson
 		}
 
 
-		private void UpdateCameraPosition()
-		{
-			Vector3 newCameraPosition = m_Camera.transform.localPosition;
 
-            if (m_IsCrouching)
-            {
-                newCameraPosition.y = 0.4f;
-            }
-            else if (m_CharacterController.velocity.magnitude > 0 && m_CharacterController.isGrounded)
+        private void UpdateCameraPosition()
+        {
+            Vector3 newCameraPosition = m_Camera.transform.localPosition;
+
+            //sytuacja gdy gracz porusza siê na ziemi
+            if (m_CharacterController.velocity.magnitude > 0 && m_CharacterController.isGrounded)
             {
                 newCameraPosition.y = m_Camera.transform.localPosition.y - m_JumpBob.Offset();
-                newCameraPosition.y *= newCameraPosition.y == 0.4f ? 2 : 1;
+
+                if (m_IsCrouching && newCameraPosition.y != (m_OriginalCameraPosition.y / 2))
+                    newCameraPosition.y *= 0.5f;
+                if (!m_IsCrouching && newCameraPosition.y == (m_OriginalCameraPosition.y / 2))
+                    newCameraPosition.y *= 2;
             }
-			else
-                newCameraPosition.y = m_OriginalCameraPosition.y - m_JumpBob.Offset();
-            //do poprawy
-			m_Camera.transform.localPosition = newCameraPosition.y < 0 ? m_OriginalCameraPosition : newCameraPosition;
-		}
+            else if (m_CharacterController.isGrounded) // gdy gracz nie porusza siê i jest na ziemi(stoi)
+            {
+                if (m_IsCrouching && newCameraPosition.y != (m_OriginalCameraPosition.y / 2))
+                    newCameraPosition.y *= 0.5f;
+                if (!m_IsCrouching && newCameraPosition.y == (m_OriginalCameraPosition.y / 2) && m_JumpBob.Offset() == 0)
+                    newCameraPosition.y *= 2;
+            }
+            else //sytuacja gdy gracz nie porusza siê lub jest w powietrzu
+            {
+                if (m_JumpBob.Offset() > 0)
+                    Debug.Log(m_JumpBob.Offset());
+                
+                newCameraPosition.y = m_OriginalCameraPosition.y - (m_JumpBob.Offset() <= 1 ? m_JumpBob.Offset() : 1);
+            }
+
+            if (newCameraPosition.y < 0.8 && !m_IsCrouching)
+                newCameraPosition.y = m_OriginalCameraPosition.y;
+
+            m_Camera.transform.localPosition = newCameraPosition;
+
+        }
 
 
-		private void GetInput()
+        private void GetInput()
 		{
 			float horizontal = CrossPlatformInputManager.GetAxis("Horizontal");
 			float vertical = CrossPlatformInputManager.GetAxis("Vertical");
@@ -227,18 +249,29 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
             m_IsRunning = Input.GetKey(KeyCode.LeftShift);
             m_IsCrouching = Input.GetKey(KeyCode.LeftControl);
+            m_IsWalking = !m_IsCrouching && !m_IsRunning && m_CharacterController.velocity.magnitude > 0;
 
-            m_IsWalking = !m_IsCrouching && !m_IsRunning;
+            if (!m_IsRunning && !m_IsCrouching)
+            {
+                m_speed = m_WalkSpeed;
+                audibility = audibilityForWalk;
+            }
 
-            if (!m_IsRunning && !m_IsCrouching) 
-			    m_speed = m_WalkSpeed;
             //œmieszne rzeczy siê dziej¹ przy jednoczesnym wciœnieciu shift i ctrl
             //mo¿e warto zmieniæ na obs³uge key up/down
-			if (m_IsRunning && !RunningBefore && !m_IsCrouching)
+            if (m_IsRunning && !RunningBefore && !m_IsCrouching)
+            {
                 m_speed = m_RunSpeed;
+                audibility = audibilityForRun;
+            }
 
             if (m_IsCrouching && !CrouchingBefore)
+            {
                 m_speed = m_StealthSpeed;
+                audibility = audibilityForCrouch;
+            }
+            if (!m_IsRunning && !m_IsCrouching && !m_IsWalking)
+                audibility = 0f;
 
             m_Input = new Vector2(horizontal, vertical);
 
@@ -246,14 +279,6 @@ namespace UnityStandardAssets.Characters.FirstPerson
 			if (m_Input.sqrMagnitude > 1)
 			{
 				m_Input.Normalize();
-			}
-
-			// handle speed change to give an fov kick
-			// only if the player is going to a run, is running and the fovkick is to be used
-			if (m_IsWalking != waswalking && m_UseFovKick && m_CharacterController.velocity.sqrMagnitude > 0)
-			{
-				StopAllCoroutines();
-				StartCoroutine(!m_IsWalking ? m_FovKick.FOVKickUp() : m_FovKick.FOVKickDown());
 			}
 		}
 
@@ -293,8 +318,8 @@ namespace UnityStandardAssets.Characters.FirstPerson
             if(isAlive)
             {
                 isAlive = false;
+                audibility = 0;
                 GetComponent<Aspect>().aspectName = Aspect.aspect.DeadBody;
-                Debug.Log("Omnomnomnom...");
                 for (int i = 0; i < 100; i++)
                 {
                     transform.position -= new Vector3(0, 0.005f, 0);
