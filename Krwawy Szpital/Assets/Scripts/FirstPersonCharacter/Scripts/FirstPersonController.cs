@@ -15,7 +15,6 @@ namespace UnityStandardAssets.Characters.FirstPerson
 		
 
 		[SerializeField] private float m_WalkSpeed;
-
 		[SerializeField] private float m_RunSpeed;
 		[SerializeField] [Range(0f, 1f)] private float m_RunstepLenghten;
 
@@ -34,7 +33,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
 
 
-
+        
 
         public bool m_IsCrouching;
         public float audibilityForCrouch;
@@ -46,8 +45,9 @@ namespace UnityStandardAssets.Characters.FirstPerson
         public float audibility;
         public float m_speed;
 
+        private doorControler doorInRange;
         private Camera m_Camera;
-		public bool m_Jump;
+		private bool m_Jump;
 		private Vector2 m_Input;
 		private Vector3 m_MoveDir = Vector3.zero;
 		private CharacterController m_CharacterController;
@@ -56,12 +56,33 @@ namespace UnityStandardAssets.Characters.FirstPerson
 		private Vector3 m_OriginalCameraPosition;
 		private float m_StepCycle;
 		private float m_NextStep;
-		public bool m_Jumping;
+		private bool m_Jumping;
 		private AudioSource m_AudioSource;
 		private bool isAlive;
 		private Aspect aspect;
 
-		private void Start()
+
+        public void setDoor(doorControler door = null){
+            doorInRange = door;
+        }
+
+        public void DieOnCollisionWithMonster()
+        {
+            if (isAlive)
+            {
+                isAlive = false;
+                audibility = 0;
+                GetComponent<Aspect>().aspectName = Aspect.aspect.DeadBody;
+                for (int i = 0; i < 100; i++)
+                {
+                    transform.position -= new Vector3(0, 0.005f, 0);
+                    transform.Rotate(-0.3f, 0, -0.3f);
+                }
+            }
+        }
+
+
+        private void Start()
 		{
 			m_CharacterController = GetComponent<CharacterController>();
 			m_Camera = Camera.main;
@@ -88,8 +109,6 @@ namespace UnityStandardAssets.Characters.FirstPerson
 					m_Jump = CrossPlatformInputManager.GetButtonDown("Jump");
 				}
 
-
-
                 if (!m_PreviouslyGrounded && m_CharacterController.isGrounded)
 				{
 					StartCoroutine(m_JumpBob.DoBobCycle());
@@ -97,6 +116,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
 					m_MoveDir.y = 0f;
 					m_Jumping = false;
 				}
+
 				if (!m_CharacterController.isGrounded && !m_Jumping && m_PreviouslyGrounded)
 				{
 					m_MoveDir.y = 0f;
@@ -106,16 +126,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
 			}
 		}
 
-
-		private void PlayLandingSound()
-		{
-			m_AudioSource.clip = m_LandSound;
-			m_AudioSource.Play();
-			m_NextStep = m_StepCycle + .5f;
-		}
-
-
-		private void FixedUpdate()
+        private void FixedUpdate()
 		{
 			if (isAlive)
 			{
@@ -156,13 +167,19 @@ namespace UnityStandardAssets.Characters.FirstPerson
 			}
 		}
 
+    #region audio
+        private void PlayLandingSound()
+		{
+			m_AudioSource.clip = m_LandSound;
+			m_AudioSource.Play();
+			m_NextStep = m_StepCycle + .5f;
+		}
 
 		private void PlayJumpSound()
 		{
 			m_AudioSource.clip = m_JumpSound;
 			m_AudioSource.Play();
 		}
-
 
 		private void ProgressStepCycle()
 		{
@@ -182,7 +199,6 @@ namespace UnityStandardAssets.Characters.FirstPerson
 			PlayFootStepAudio();
 		}
 
-
 		private void PlayFootStepAudio()
 		{
 			if (!m_CharacterController.isGrounded)
@@ -198,8 +214,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
 			m_FootstepSounds[n] = m_FootstepSounds[0];
 			m_FootstepSounds[0] = m_AudioSource.clip;
 		}
-
-
+    #endregion
 
         private void UpdateCameraPosition()
         {
@@ -236,7 +251,6 @@ namespace UnityStandardAssets.Characters.FirstPerson
             m_Camera.transform.localPosition = newCameraPosition;
 
         }
-
 
         private void GetInput()
 		{
@@ -280,8 +294,13 @@ namespace UnityStandardAssets.Characters.FirstPerson
 			{
 				m_Input.Normalize();
 			}
-		}
 
+            //obs³uga drzwi
+            if (doorInRange != null && Input.GetMouseButtonDown(0))
+            {
+                doorInRange.Use();
+            }
+        }
 
 		private void RotateView()
 		{
@@ -291,7 +310,6 @@ namespace UnityStandardAssets.Characters.FirstPerson
 			}
 			
 		}
-
 
 		private void OnControllerColliderHit(ControllerColliderHit hit)
 		{
@@ -313,19 +331,5 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
 		}
 
-		public void DieOnCollisionWithMonster()
-		{
-            if(isAlive)
-            {
-                isAlive = false;
-                audibility = 0;
-                GetComponent<Aspect>().aspectName = Aspect.aspect.DeadBody;
-                for (int i = 0; i < 100; i++)
-                {
-                    transform.position -= new Vector3(0, 0.005f, 0);
-                    transform.Rotate(-0.3f, 0, -0.3f);
-                }
-            }
-		}
 	}
 }
