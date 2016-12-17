@@ -15,11 +15,6 @@ public class doorControler : MonoBehaviour
     //are we currently spinning?
     //we use this to prevent multiple instance of spinning starting.
     private bool spinning = false;
-    private void Start()
-    {
-        startRotation = transform.rotation.eulerAngles;
-        endRotation = transform.rotation.eulerAngles + new Vector3(0, (revertRotation ? -90 : 90), 0);
-    }
 
     public void Use()
     {
@@ -30,11 +25,26 @@ public class doorControler : MonoBehaviour
                 Open();
     }
 
+    public void Destroy()
+    {
+        isDestroyed = true;
+        StopAllCoroutines();
+        GetComponent<Rigidbody>().useGravity = true;
+        GetComponent<Rigidbody>().constraints = new RigidbodyConstraints();
+    }
+
+    private void Start()
+    {
+        startRotation = transform.rotation.eulerAngles;
+        endRotation = transform.rotation.eulerAngles + new Vector3(0, (revertRotation ? -90 : 90), 0);
+    }
+
     private void Open()
     {
         StartCoroutine(Spin(true));
         isOpen = true;
     }
+
     private void Close()
     {
         StartCoroutine(Spin(false));

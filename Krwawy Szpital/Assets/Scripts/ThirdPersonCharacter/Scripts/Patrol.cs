@@ -68,5 +68,9 @@ public class Patrol : MonoBehaviour
         {
             collision.gameObject.GetComponent<FirstPersonController>().DieOnCollisionWithMonster();
         }
+        if (collision.gameObject.tag == "Door")
+        {
+            collision.gameObject.GetComponent<doorControler>().Destroy();
+        }
     }
 }
