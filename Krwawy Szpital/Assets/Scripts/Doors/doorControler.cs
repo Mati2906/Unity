@@ -2,12 +2,14 @@
 using System.Collections;
 using UnityStandardAssets.Characters.FirstPerson;
 
-public class doorControler : MonoBehaviour
+public class DoorControler : MonoBehaviour
 {
-    public float turnSpeed = 45f;
-    [SerializeField] private bool isOpen = false;
-    public bool revertRotation = false;
-    public bool isDestroyed = false;
+    public float turnSpeed;
+    [SerializeField] private bool isOpen;
+    public bool revertRotation;
+    public bool locked;
+    public int keyNumber;
+    public bool isDestroyed;
 
     private Vector3 startRotation;
     private Vector3 endRotation;
@@ -16,9 +18,12 @@ public class doorControler : MonoBehaviour
     //we use this to prevent multiple instance of spinning starting.
     private bool spinning = false;
 
-    public void Use()
+    public void Use(bool key)
     {
-        if(!spinning && !isDestroyed)
+        if (locked && key)
+            locked = false;
+
+        if(!spinning && !isDestroyed && !locked)
             if (isOpen)
                 Close();
             else

@@ -6,6 +6,7 @@ public class Perspective : Sense
 {
     public int fieldOfView;
     public int ViewDistance;
+    public string asp;
 
     private Transform player;
     private FirstPersonController playerController;
@@ -64,6 +65,7 @@ public class Perspective : Sense
             Debug.DrawLine(transform.position, player.position, Color.red);
             //sprawdzamy czy tym obiektem jest gracz
             Aspect aspect = hit.collider.GetComponent<Aspect>();
+            asp = hit.transform.tag;
             if (aspect != null && aspect.aspectName == aspectName)
                 patrol.Run(hit.collider.GetComponent<Transform>().position);
         }

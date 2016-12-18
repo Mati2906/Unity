@@ -70,7 +70,7 @@ public class Patrol : MonoBehaviour
         }
         if (collision.gameObject.tag == "Door")
         {
-            collision.gameObject.GetComponent<doorControler>().Destroy();
+            collision.gameObject.GetComponent<DoorControler>().Destroy();
         }
     }
 }

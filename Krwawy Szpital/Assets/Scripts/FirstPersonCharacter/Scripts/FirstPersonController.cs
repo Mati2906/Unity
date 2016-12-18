@@ -33,7 +33,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
 
 
-        
+        public bool[] Keys = new bool[8];
 
         public bool m_IsCrouching;
         public float audibilityForCrouch;
@@ -42,10 +42,16 @@ namespace UnityStandardAssets.Characters.FirstPerson
         public bool m_IsRunning;
         public float audibilityForRun;
 
+        public float audibilityForUseDoor;
+
         public float audibility;
         public float m_speed;
 
-        private doorControler doorInRange;
+        public bool isHidden;
+
+        private DoorControler doorInRange;
+        private BedController bedInRange;
+
         private Camera m_Camera;
 		private bool m_Jump;
 		private Vector2 m_Input;
@@ -62,8 +68,13 @@ namespace UnityStandardAssets.Characters.FirstPerson
 		private Aspect aspect;
 
 
-        public void setDoor(doorControler door = null){
+        public void setDoor(DoorControler door = null){
             doorInRange = door;
+        }
+
+        public void setBed(BedController bed = null)
+        {
+            bedInRange = bed;
         }
 
         public void DieOnCollisionWithMonster()
@@ -81,6 +92,10 @@ namespace UnityStandardAssets.Characters.FirstPerson
             }
         }
 
+        public void setKeyIndex(int index)
+        {
+            Keys[index] = true;
+        }
 
         private void Start()
 		{
@@ -158,9 +173,14 @@ namespace UnityStandardAssets.Characters.FirstPerson
 				{
 					m_MoveDir += Physics.gravity*m_GravityMultiplier*Time.fixedDeltaTime;
 				}
-				m_CollisionFlags = m_CharacterController.Move(m_MoveDir*Time.fixedDeltaTime);
 
-				ProgressStepCycle();
+                if(!isHidden)
+                {
+                    m_CollisionFlags = m_CharacterController.Move(m_MoveDir*Time.fixedDeltaTime);
+
+				    ProgressStepCycle();
+                }
+				    
 				UpdateCameraPosition();
 
 				m_MouseLook.UpdateCursorLock();
@@ -185,8 +205,13 @@ namespace UnityStandardAssets.Characters.FirstPerson
 		{
 			if (m_CharacterController.velocity.sqrMagnitude > 0 && (m_Input.x != 0 || m_Input.y != 0))
 			{
-				m_StepCycle += (m_CharacterController.velocity.magnitude + (m_speed * (m_IsWalking ? 1f : m_RunstepLenghten)))*
-							 Time.fixedDeltaTime;
+                float stepLenghten = 1f;
+                if (m_IsRunning)
+                    stepLenghten = m_RunstepLenghten;
+                else if (m_IsCrouching)
+                    stepLenghten = m_StealthstepLenghten;
+
+                m_StepCycle += (m_CharacterController.velocity.magnitude + (m_speed * stepLenghten)) * Time.fixedDeltaTime;
 			}
 
 			if (!(m_StepCycle > m_NextStep))
@@ -260,55 +285,70 @@ namespace UnityStandardAssets.Characters.FirstPerson
 			bool waswalking = m_IsWalking;
             bool RunningBefore = m_IsRunning;
             bool CrouchingBefore = m_IsCrouching;
-
-            m_IsRunning = Input.GetKey(KeyCode.LeftShift);
-            m_IsCrouching = Input.GetKey(KeyCode.LeftControl);
-            m_IsWalking = !m_IsCrouching && !m_IsRunning && m_CharacterController.velocity.magnitude > 0;
-
-            if (!m_IsRunning && !m_IsCrouching)
+            if(!isHidden)
             {
-                m_speed = m_WalkSpeed;
-                audibility = audibilityForWalk;
+                m_IsRunning = Input.GetKey(KeyCode.LeftShift);
+                m_IsCrouching = Input.GetKey(KeyCode.LeftControl);
+                m_IsWalking = !m_IsCrouching && !m_IsRunning && m_CharacterController.velocity.magnitude > 0;
+
+                if (!m_IsRunning && !m_IsCrouching)
+                {
+                    m_speed = m_WalkSpeed;
+                    audibility = audibilityForWalk;
+                }
+
+                //œmieszne rzeczy siê dziej¹ przy jednoczesnym wciœnieciu shift i ctrl
+                //mo¿e warto zmieniæ na obs³uge key up/down
+                if (m_IsRunning && !RunningBefore && !m_IsCrouching)
+                {
+                    m_speed = m_RunSpeed;
+                    audibility = audibilityForRun;
+                }
+
+                if (m_IsCrouching && !CrouchingBefore)
+                {
+                    m_speed = m_StealthSpeed;
+                    audibility = audibilityForCrouch;
+                }
+                if (!m_IsRunning && !m_IsCrouching && !m_IsWalking)
+                    audibility = 0f;
+
+                m_Input = new Vector2(horizontal, vertical);
+
+                //obs³uga drzwi 
+                if (doorInRange != null && Input.GetMouseButtonDown(0))
+                {
+                    audibility = audibilityForUseDoor;
+                    doorInRange.Use(Keys[doorInRange.keyNumber]);
+                }
+            }
+            if (bedInRange != null && Input.GetMouseButtonDown(0))
+            {
+                if (isHidden && bedInRange.Use())
+                {
+                    GetComponent<CharacterController>().enabled = true;
+                    GetComponent<FirstPersonController>().m_GravityMultiplier = 1;
+                    isHidden = false;
+                }
+                else if (bedInRange.Use())
+                {
+                    GetComponent<CharacterController>().enabled = false;
+                    GetComponent<FirstPersonController>().m_GravityMultiplier = 0;
+                    isHidden = true;
+                    audibility = 0;
+                }
             }
 
-            //œmieszne rzeczy siê dziej¹ przy jednoczesnym wciœnieciu shift i ctrl
-            //mo¿e warto zmieniæ na obs³uge key up/down
-            if (m_IsRunning && !RunningBefore && !m_IsCrouching)
-            {
-                m_speed = m_RunSpeed;
-                audibility = audibilityForRun;
-            }
-
-            if (m_IsCrouching && !CrouchingBefore)
-            {
-                m_speed = m_StealthSpeed;
-                audibility = audibilityForCrouch;
-            }
-            if (!m_IsRunning && !m_IsCrouching && !m_IsWalking)
-                audibility = 0f;
-
-            m_Input = new Vector2(horizontal, vertical);
-
-			// normalize input if it exceeds 1 in combined length:
-			if (m_Input.sqrMagnitude > 1)
+            // normalize input if it exceeds 1 in combined length:
+            if (m_Input.sqrMagnitude > 1)
 			{
 				m_Input.Normalize();
 			}
-
-            //obs³uga drzwi
-            if (doorInRange != null && Input.GetMouseButtonDown(0))
-            {
-                doorInRange.Use();
-            }
         }
 
 		private void RotateView()
 		{
-			if (isAlive)
-			{
-				m_MouseLook.LookRotation(transform, m_Camera.transform);
-			}
-			
+		    m_MouseLook.LookRotation(transform, m_Camera.transform);
 		}
 
 		private void OnControllerColliderHit(ControllerColliderHit hit)
