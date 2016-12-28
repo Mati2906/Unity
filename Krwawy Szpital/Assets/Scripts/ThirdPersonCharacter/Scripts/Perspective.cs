@@ -36,17 +36,21 @@ public class Perspective : Sense
         Aspect aspect = other.GetComponent<Aspect>();
 
         if (aspect != null && aspect.aspectName == aspectName)
+        {
             patrol.Run(other.GetComponent<Transform>().position);
+            if(DetectAspect())
+                other.GetComponent<FirstPersonController>().DieOnCollisionWithMonster();
+        }
+            
     }
+
     void ListeningPlayer()
     {
         if (Vector3.Distance(player.position, transform.position) < playerController.audibility)
-        {
-            Debug.Log("słysze cie! - " + Vector3.Distance(player.position, transform.position));
             patrol.SetTarget(player.position);
-        }
     }
-    void DetectAspect()
+
+    bool DetectAspect()
     {
         RaycastHit hit;
         Vector3 direction;
@@ -67,8 +71,13 @@ public class Perspective : Sense
             Aspect aspect = hit.collider.GetComponent<Aspect>();
             asp = hit.transform.tag;
             if (aspect != null && aspect.aspectName == aspectName)
+            {
                 patrol.Run(hit.collider.GetComponent<Transform>().position);
+                return true;
+            }
+                
         }
+        return false;
     }
 
     void OnDrawGizmos()

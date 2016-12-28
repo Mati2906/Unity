@@ -6,8 +6,7 @@ using UnityStandardAssets.Characters.FirstPerson;
 public class Patrol : MonoBehaviour
 {
     public List<Transform> points;
-    public ThirdPersonCharacter character { get; private set; }
-
+    public MonsterController monster { get; private set; }
     private bool Running = false;
     private Vector3? target;
     private int destPoint = 0;
@@ -16,7 +15,7 @@ public class Patrol : MonoBehaviour
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        character = GetComponent<ThirdPersonCharacter>();
+        monster = GetComponent<MonsterController>();
 
         agent.autoBraking = true;
         agent.updateRotation = false;
@@ -31,7 +30,7 @@ public class Patrol : MonoBehaviour
             agent.SetDestination(target.Value);
 
         if (agent.remainingDistance > agent.stoppingDistance)
-            character.Move(agent.desiredVelocity, !Running, false);
+            monster.Move(agent.desiredVelocity, Running ? 4f : 1f);
         else
         {
             if (target.HasValue)
@@ -55,7 +54,11 @@ public class Patrol : MonoBehaviour
     void GotoNextPoint()
     {
         if (points.Count == 0)
+        {
+            monster.Move(agent.desiredVelocity, 0);
             return;
+        }
+            
 
         if(points[destPoint] != null)
             agent.SetDestination(points[destPoint].position);

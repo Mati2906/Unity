@@ -282,7 +282,6 @@ namespace UnityStandardAssets.Characters.FirstPerson
 			float horizontal = CrossPlatformInputManager.GetAxis("Horizontal");
 			float vertical = CrossPlatformInputManager.GetAxis("Vertical");
 
-			bool waswalking = m_IsWalking;
             bool RunningBefore = m_IsRunning;
             bool CrouchingBefore = m_IsCrouching;
             if(!isHidden)
